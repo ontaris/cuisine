@@ -6,8 +6,10 @@ try:
 except ImportError:
     from distutils.core import setup
 
-VERSION = eval(filter(lambda _:_.startswith("VERSION"),
-    file("src/cuisine.py").readlines())[0].split("=")[1])
+with open("src/cuisine.py") as f:
+    fff = f.readlines()
+    VERSION = list(filter(lambda _:_.startswith("VERSION"),
+                          fff))[0].split("=")[1].strip().strip('"')
 
 setup(
     name             = "cuisine",
@@ -18,7 +20,7 @@ setup(
     url              = "http://github.com/sebastien/cuisine",
     download_url     = "https://github.com/sebastien/cuisine/tarball/%s" % (VERSION),
     keywords         = ["fabric", "chef", "ssh",],
-    install_requires = ["fabric",],
+    install_requires = ["fabric3", "six"],
     package_dir      = {"":"src"},
     py_modules       = ["cuisine"],
     license          = "License :: OSI Approved :: BSD License",

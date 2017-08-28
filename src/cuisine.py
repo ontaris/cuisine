@@ -43,9 +43,14 @@ See also:
 
 from __future__ import with_statement
 import base64, hashlib, os, re, string, tempfile, subprocess, types, threading, sys
-import tempfile, functools, StringIO
+import tempfile, functools
+try:
+	import StringIO
+except ImportError:
+	from io import StringIO
 import fabric, fabric.api, fabric.operations, fabric.context_managers, fabric.state, fabric.version
 import platform
+from six import PY2, PY3, string_types, text_type
 
 try:
 	# NOTE: Reporter is a custom module that follows the logging interface
@@ -124,7 +129,7 @@ class Stats(object):
 
 def stringify( value ):
 	"""Turns the given value in a user-friendly string that can be displayed"""
-	if   type(value) in (str, unicode, bytes) and len(value) > STRINGIFY_MAXSTRING:
+	if   type(value) in (text_type, bytes) and len(value) > STRINGIFY_MAXSTRING:
 		return "{0}...".format(value[0:STRINGIFY_MAXSTRING])
 	elif type(value) in (list, tuple) and len(value) > 10:
 		return"[{0},...]".format(", ".join([stringify(_) for _ in value[0:STRINGIFY_MAXLISTSTRING]]))
@@ -621,7 +626,7 @@ def file_local_read(location):
 	"""Reads a *local* file from the given location, expanding '~' and
 	shell variables."""
 	p = os.path.expandvars(os.path.expanduser(location))
-	f = file(p, 'rb')
+	f = open(p, 'rb')
 	t = f.read()
 	f.close()
 	return t
@@ -751,7 +756,7 @@ def file_upload(remote, local, sudo=None, scp=False):
 	exists or the content are different."""
 	# FIXME: Big files are never transferred properly!
 	use_sudo = is_sudo() or sudo #XXX: this 'sudo' kw arg shadows the function named 'sudo'
-	f       = file(local, 'rb')
+	f       = open(local, 'rb')
 	content = f.read()
 	f.close()
 	sig     = hashlib.md5(content).hexdigest()
@@ -889,7 +894,7 @@ def process_find(name, exact=False):
 	"""Returns the pids of processes with the given name. If exact is `False`
 	it will return the list of all processes that start with the given
 	`name`."""
-	is_string = isinstance(name,str) or isinstance(name,unicode)
+	is_string = isinstance(name,str) or isinstance(name,text_type)
 	# NOTE: ps -A seems to be the only way to not have the grep appearing
 	# as well
 	if is_string: processes = run("ps -A | grep {0} ; true".format(name))
@@ -1042,7 +1047,7 @@ def package_install_apt(package, update=False):
 
 def package_ensure_apt(package, update=False):
 	"""Ensure apt packages are installed"""
-	if isinstance(package, basestring):
+	if isinstance(package, string_types):
 		package = package.split()
 	res = {}
 	for p in package:
@@ -1188,7 +1193,7 @@ def package_install_pacman(package, update=False):
 
 def package_ensure_pacman(package, update=False):
 	"""Ensure apt packages are installed"""
-	if not isinstance(package, basestring):
+	if not isinstance(package, string_types):
 		package = " ".join(package)
 	status = run("pacman -Q %s ; true" % package)
 	if ('was not found' in status):
@@ -1236,7 +1241,7 @@ def package_install_emerge(package, update=False):
 	sudo("emerge -q %s" % (package))
 
 def package_ensure_emerge(package, update=False):
-	if not isinstance(package, basestring):
+	if not isinstance(package, string_types):
 		package = " ".join(package)
 	if update:
 		sudo("emerge -q --update --newuse %s" % package)

@@ -7,7 +7,8 @@ if os.path.exists(PATH): os.unlink(PATH)
 cuisine.connect("localhost")
 cuisine.file_write(PATH, TEXT)
 assert os.path.exists(PATH), "file_write did not create file %s" % (PATH)
-text = file(PATH).read()
+with open(PATH)as f:
+    text = f.read()
 assert TEXT == text, "Expected: %s, got %s" % (repr(TEXT), repr(text))
-print "OK"
+print("OK")
 # EOF
